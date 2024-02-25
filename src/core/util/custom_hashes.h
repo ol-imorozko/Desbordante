@@ -77,4 +77,5 @@ struct hash<std::pair<std::shared_ptr<Vertical>, T>> {
         return std::hash<Vertical>()(*k.first);
     }
 };
+
 }  // namespace std
