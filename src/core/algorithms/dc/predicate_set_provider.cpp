@@ -4,7 +4,7 @@ namespace model {
 
 std::shared_ptr<PredicateSetProvider> PredicateSetProvider::GetInstance() {
     if (!instance_) {
-        instance_ = std::make_shared<PredicateSetProvider>();
+        instance_ = std::shared_ptr<PredicateSetProvider>(new PredicateSetProvider());
     }
     return instance_;
 }
