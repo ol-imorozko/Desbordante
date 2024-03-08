@@ -92,4 +92,5 @@ CSVConfig const kProbeTest2 = CreateCsvConfig("ProbeTest2.csv", ',', true);
 CSVConfig const kTestParse = CreateCsvConfig("TestParse.csv", ',', false);
 CSVConfig const kODnorm6 = CreateCsvConfig("OD_norm6.csv", ',', true);
 CSVConfig const kTmpDC = CreateCsvConfig("tmp_dc.csv", ',', true);
+CSVConfig const kTestDC = CreateCsvConfig("dc_test_dataset.csv", ',', true);
 }  // namespace tests

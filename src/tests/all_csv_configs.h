@@ -80,4 +80,5 @@ extern CSVConfig const kProbeTest2;
 extern CSVConfig const kTestParse;
 extern CSVConfig const kODnorm6;
 extern CSVConfig const kTmpDC;
+extern CSVConfig const kTestDC;
 }  // namespace tests
