@@ -39,4 +39,7 @@ void IndexProvider<T>::Sort() {
 
 template class IndexProvider<PredicatePtr>;
 
+template class IndexProvider<int>;
+template class IndexProvider<double>;
+template class IndexProvider<std::string>;
 }  // namespace model
