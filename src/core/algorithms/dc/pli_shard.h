@@ -7,7 +7,7 @@
 
 namespace model {
 
-class PliShard;
+struct PliShard;
 
 /**
  * Position List Index (PLI) for a specific column segment.
@@ -62,20 +62,14 @@ public:
  * Each PliShard contains multiple PLIs, each corresponding to a column within the shard's row
  * range. This division into shards allows for parallel processing of data.
  */
-class PliShard {
-private:
-    std::vector<Pli> plis_;
+struct PliShard {
+    std::vector<Pli> plis;
     /* The beginning row index of this shard */
-    size_t beg_;
+    size_t beg;
     /* The end row index of this shard (exclusive) */
-    size_t end_;
+    size_t end;
 
-public:
     PliShard(std::vector<Pli> plis, size_t beg, size_t end);
-
-    std::vector<Pli> const& GetPlis() const noexcept {
-        return plis_;
-    }
 
     std::string ToString() const;
 };

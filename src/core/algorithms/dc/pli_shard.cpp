@@ -45,17 +45,17 @@ std::string Pli::ToString() const {
 }
 
 PliShard::PliShard(std::vector<Pli> plis, size_t beg, size_t end)
-    : plis_(std::move(plis)), beg_(beg), end_(end) {
-    for (auto& pli : plis_) pli.pli_shard_ = this;
+    : plis(std::move(plis)), beg(beg), end(end) {
+    for (auto& pli : plis) pli.pli_shard_ = this;
 }
 
 std::string PliShard::ToString() const {
     std::stringstream ss;
-    for (size_t i = 0; i < plis_.size(); ++i) {
+    for (size_t i = 0; i < plis.size(); ++i) {
         ss << "PLI #" << (i + 1) << "\n";
-        ss << plis_[i].ToString();
+        ss << plis[i].ToString();
     }
-    ss << "Range: [" << beg_ << ", " << end_ << ")\n";
+    ss << "Range: [" << beg << ", " << end << ")\n";
     return ss.str();
 }
 

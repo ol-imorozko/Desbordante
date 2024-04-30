@@ -5,6 +5,7 @@
 
 #include "all_csv_configs.h"
 #include "csv_parser/csv_parser.h"
+#include "dc/common_clue_set_builder.h"
 #include "dc/column_operand.h"
 #include "dc/operator.h"
 #include "dc/pli_shard.h"
@@ -330,8 +331,8 @@ TEST(FastADC, PliShards) {
     auto pli_shards = builder.GetPliShards();
 
     for (auto const& shard : pli_shards) {
-        for (size_t i = 0; i < shard.GetPlis().size(); ++i) {
-            auto const& pli = shard.GetPlis()[i];
+        for (size_t i = 0; i < shard.plis.size(); ++i) {
+            auto const& pli = shard.plis[i];
             auto const& keys = pli.GetKeys();
             auto const& clusters = pli.GetClusters();
             auto const& column = col_data[i];
