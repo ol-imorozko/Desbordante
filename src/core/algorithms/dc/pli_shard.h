@@ -43,7 +43,7 @@ public:
 
     size_t GetClusterIdByKey(size_t key) const;
 
-    // TODO: add GetFirstIndexWhereKeyIsLTE
+    size_t GetFirstIndexWhereKeyIsLTE(size_t target, size_t l = 0) const;
 
     std::string ToString() const;
 

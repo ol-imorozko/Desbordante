@@ -5,12 +5,12 @@
 
 #include "all_csv_configs.h"
 #include "csv_parser/csv_parser.h"
-#include "dc/common_clue_set_builder.h"
 #include "dc/column_operand.h"
 #include "dc/operator.h"
 #include "dc/pli_shard.h"
 #include "dc/predicate.h"
 #include "dc/predicate_builder.h"
+#include "dc/single_clue_set_builder.h"
 #include "table/column_layout_typed_relation_data.h"
 #include "table/typed_column_data.h"
 #include "test_dc_structures_correct_results.h"
@@ -367,7 +367,9 @@ TEST(FastADC, ClueSet) {
 
     pbuilder.BuildPredicateSpace(col_data);
 
-    model::ClueSetBuilder builder(pbuilder);
+    //won't be used, just to build some ClueSetBuilder to check generic static fields
+    auto dummy_pli_shard = model::PliShard({}, 0, 0);
+    model::SingleClueSetBuilder builder(pbuilder, dummy_pli_shard);
 
     ASSERT_EQ(builder.GetNumberOfBitsInClue(), 18);
     auto packs = builder.GetPredicatePacks();

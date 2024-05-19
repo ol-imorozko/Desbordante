@@ -6,14 +6,28 @@
 namespace model {
 
 // Define static members
-std::vector<PredicatePack> ClueSetBuilder::str_single_packs_;
-std::vector<PredicatePack> ClueSetBuilder::str_cross_packs_;
-std::vector<PredicatePack> ClueSetBuilder::num_single_packs_;
-std::vector<PredicatePack> ClueSetBuilder::num_cross_packs_;
-std::vector<ClueBitset> ClueSetBuilder::correction_map_;
+std::vector<PredicatePack> CommonClueSetBuilder::str_single_packs_;
+std::vector<PredicatePack> CommonClueSetBuilder::str_cross_packs_;
+std::vector<PredicatePack> CommonClueSetBuilder::num_single_packs_;
+std::vector<PredicatePack> CommonClueSetBuilder::num_cross_packs_;
+std::vector<ClueBitset> CommonClueSetBuilder::correction_map_;
 
-ClueBitset ClueSetBuilder::BuildCorrectionMask(PredicatesSpan group,
-                                               std::initializer_list<OperatorType> types) {
+template <typename... Vectors>
+ClueSet CommonClueSetBuilder::AccumulateClues(Vectors const&... vectors) const {
+    ClueSet clue_set;
+    auto insert_clues = [&clue_set](std::vector<ClueBitset> const& clues) {
+        for (auto const& clue : clues) {
+            if (clue.any()) {
+                clue_set.insert(clue);
+            }
+        }
+    };
+    (insert_clues(vectors), ...);
+    return clue_set;
+}
+
+ClueBitset CommonClueSetBuilder::BuildCorrectionMask(PredicatesSpan group,
+                                                     std::initializer_list<OperatorType> types) {
     PredicateSet mask;
 
     for (auto p : group) {
@@ -26,9 +40,10 @@ ClueBitset ClueSetBuilder::BuildCorrectionMask(PredicatesSpan group,
     return DynamicBitsetToClueBitset(mask.GetBitset());
 }
 
-void ClueSetBuilder::BuildPacksAndCorrectionMap(PredicatesVector const& predicates,
-                                                size_t group_size, PackAction action,
-                                                std::vector<PredicatePack>& pack, size_t& count) {
+void CommonClueSetBuilder::BuildPacksAndCorrectionMap(PredicatesVector const& predicates,
+                                                      size_t group_size, PackAction action,
+                                                      std::vector<PredicatePack>& pack,
+                                                      size_t& count) {
     assert(predicates.size() % group_size == 0);
     size_t num_groups = predicates.size() / group_size;
 
@@ -40,8 +55,8 @@ void ClueSetBuilder::BuildPacksAndCorrectionMap(PredicatesVector const& predicat
     }
 }
 
-void ClueSetBuilder::BuildNumPacks(PredicatesVector const& predicates,
-                                   std::vector<PredicatePack>& pack, size_t& count) {
+void CommonClueSetBuilder::BuildNumPacks(PredicatesVector const& predicates,
+                                         std::vector<PredicatePack>& pack, size_t& count) {
     PackAction action = [](PredicatesSpan group_span, std::vector<PredicatePack>& pack,
                            size_t& count) {
         PredicatePtr eq = GetPredicateByType(group_span, OperatorType::kEqual);
@@ -63,8 +78,8 @@ void ClueSetBuilder::BuildNumPacks(PredicatesVector const& predicates,
     BuildPacksAndCorrectionMap(predicates, 6, action, pack, count);
 }
 
-void ClueSetBuilder::BuildCatPacks(PredicatesVector const& predicates,
-                                   std::vector<PredicatePack>& pack, size_t& count) {
+void CommonClueSetBuilder::BuildCatPacks(PredicatesVector const& predicates,
+                                         std::vector<PredicatePack>& pack, size_t& count) {
     PackAction action = [](PredicatesSpan group_span, std::vector<PredicatePack>& pack,
                            size_t& count) {
         PredicatePtr eq = GetPredicateByType(group_span, OperatorType::kEqual);
@@ -80,7 +95,7 @@ void ClueSetBuilder::BuildCatPacks(PredicatesVector const& predicates,
     BuildPacksAndCorrectionMap(predicates, 2, action, pack, count);
 }
 
-void ClueSetBuilder::BuildPredicatePacksAndCorrectionMap(PredicateBuilder const& pBuilder) {
+void CommonClueSetBuilder::BuildPredicatePacksAndCorrectionMap(PredicateBuilder const& pBuilder) {
     auto const& cat_single = pBuilder.GetStrSingleColumnPredicates();
     auto const& cat_cross = pBuilder.GetStrCrossColumnPredicates();
     auto const& num_single = pBuilder.GetNumSingleColumnPredicates();

@@ -12,8 +12,8 @@ SingleClueSetBuilder::SingleClueSetBuilder(PredicateBuilder const& pbuilder, Pli
     ConfigureOnce(pbuilder);
 }
 
-std::vector<ClueBitset> SingleClueSetBuilder::BuildClueSet() {
-    std::vector<uint64_t> clues(evidence_count_, 0);
+ClueSet SingleClueSetBuilder::BuildClueSet() {
+    std::vector<ClueBitset> clues(evidence_count_, 0);
 
     for (auto const& cat_pack : str_single_packs_) {
         CorrectStrSingle(clues, plis_[cat_pack.left_idx], cat_pack.eq_mask.to_ulong());
@@ -34,17 +34,19 @@ std::vector<ClueBitset> SingleClueSetBuilder::BuildClueSet() {
                         num_pack.eq_mask.to_ulong(), num_pack.gt_mask.to_ulong());
     }
 
-    std::vector<ClueBitset> clue_set;
-    clue_set.reserve(clues.size());
-    for (auto clue : clues) {
-        if (clue != 0) {
-            clue_set.push_back(clue);
-        }
+    ClueSet clue_set = AccumulateClues(clues);
+
+    // Remove reflex evidence
+    // TODO: check... I guess it's ok..???
+    auto it = clue_set.find(0);
+    if (it != clue_set.end() && *it == tid_range_) {
+        clue_set.erase(it);
     }
+
     return clue_set;
 }
 
-void SingleClueSetBuilder::SetSingleEQ(std::vector<uint64_t>& clues, Pli::Cluster const& cluster,
+void SingleClueSetBuilder::SetSingleEQ(std::vector<ClueBitset>& clues, Pli::Cluster const& cluster,
                                        size_t mask) {
     for (size_t i = 0; i < cluster.size() - 1; ++i) {
         size_t t1 = cluster[i] - tid_beg_;
@@ -57,7 +59,7 @@ void SingleClueSetBuilder::SetSingleEQ(std::vector<uint64_t>& clues, Pli::Cluste
     }
 }
 
-void SingleClueSetBuilder::CorrectStrSingle(std::vector<uint64_t>& clues, Pli const& pli,
+void SingleClueSetBuilder::CorrectStrSingle(std::vector<ClueBitset>& clues, Pli const& pli,
                                             size_t mask) {
     for (auto const& cluster : pli.GetClusters()) {
         if (cluster.size() > 1) {
@@ -66,7 +68,7 @@ void SingleClueSetBuilder::CorrectStrSingle(std::vector<uint64_t>& clues, Pli co
     }
 }
 
-void SingleClueSetBuilder::SetCrossEQ(std::vector<uint64_t>& clues,
+void SingleClueSetBuilder::SetCrossEQ(std::vector<ClueBitset>& clues,
                                       Pli::Cluster const& pivotCluster,
                                       Pli::Cluster const& probeCluster, size_t mask) {
     for (size_t tid1 : pivotCluster) {
@@ -79,7 +81,7 @@ void SingleClueSetBuilder::SetCrossEQ(std::vector<uint64_t>& clues,
     }
 }
 
-void SingleClueSetBuilder::CorrectStrCross(std::vector<uint64_t>& clues, Pli const& pivotPli,
+void SingleClueSetBuilder::CorrectStrCross(std::vector<ClueBitset>& clues, Pli const& pivotPli,
                                            Pli const& probePli, size_t mask) {
     auto const& pivot_clusters = pivotPli.GetClusters();
     auto const& probe_clusters = probePli.GetClusters();
@@ -88,7 +90,7 @@ void SingleClueSetBuilder::CorrectStrCross(std::vector<uint64_t>& clues, Pli con
     }
 }
 
-void SingleClueSetBuilder::SetGT(std::vector<uint64_t>& clues, Pli::Cluster const& pivotCluster,
+void SingleClueSetBuilder::SetGT(std::vector<ClueBitset>& clues, Pli::Cluster const& pivotCluster,
                                  Pli const& probePli, int from, size_t mask) {
     for (size_t pivot_tid : pivotCluster) {
         size_t r1 = (pivot_tid - tid_beg_) * tid_range_;
@@ -102,7 +104,7 @@ void SingleClueSetBuilder::SetGT(std::vector<uint64_t>& clues, Pli::Cluster cons
     }
 }
 
-void SingleClueSetBuilder::CorrectNumSingle(std::vector<uint64_t>& clues, Pli const& pli,
+void SingleClueSetBuilder::CorrectNumSingle(std::vector<ClueBitset>& clues, Pli const& pli,
                                             size_t eqMask, size_t gtMask) {
     for (size_t i = 0; i < pli.GetClusters().size(); ++i) {
         auto const& cluster = pli.GetClusters()[i];
@@ -115,7 +117,7 @@ void SingleClueSetBuilder::CorrectNumSingle(std::vector<uint64_t>& clues, Pli co
     }
 }
 
-void SingleClueSetBuilder::CorrectNumCross(std::vector<uint64_t>& clues, Pli const& pivotPli,
+void SingleClueSetBuilder::CorrectNumCross(std::vector<ClueBitset>& clues, Pli const& pivotPli,
                                            Pli const& probePli, size_t eqMask, size_t gtMask) {
     for (size_t i = 0; i < pivotPli.GetKeys().size(); ++i) {
         size_t pivot_key = pivotPli.GetKeys()[i];

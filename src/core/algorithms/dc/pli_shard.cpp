@@ -21,6 +21,11 @@ size_t Pli::GetClusterIdByKey(size_t key) const {
     throw std::runtime_error("No cluster can be found by key " + std::to_string(key));
 }
 
+size_t Pli::GetFirstIndexWhereKeyIsLTE(size_t target, size_t l) const {
+    auto it = std::lower_bound(keys_.begin() + l, keys_.end(), target, std::greater<size_t>());
+    return std::distance(keys_.begin(), it);
+}
+
 std::string Pli::ToString() const {
     std::stringstream ss;
 

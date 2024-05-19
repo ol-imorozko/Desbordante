@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "dc/pli_shard.h"
 #include "predicate_builder.h"
 
 namespace model {
@@ -11,6 +12,7 @@ namespace model {
  * (TODO: explain why more is probably unnecessary)
  */
 using ClueBitset = std::bitset<64>;
+using ClueSet = std::unordered_set<ClueBitset>;
 
 /** Predicate EQ (and GT) of one column pair */
 struct PredicatePack {
@@ -43,16 +45,16 @@ struct PredicatePack {
 
 /* просто класс со статическими методами и полями. Они не привязаны к классу, просто
  * типо как в его неймспейсе. Эти поля будут использовать наследники в функции BuildClueSet() */
-class ClueSetBuilder {
+class CommonClueSetBuilder {
 public:
-    ClueSetBuilder(ClueSetBuilder const& other) = delete;
-    ClueSetBuilder& operator=(ClueSetBuilder const& other) = delete;
-    ClueSetBuilder(ClueSetBuilder&& other) noexcept = default;
-    ClueSetBuilder& operator=(ClueSetBuilder&& other) noexcept = default;
-    ClueSetBuilder();
+    CommonClueSetBuilder(CommonClueSetBuilder const& other) = delete;
+    CommonClueSetBuilder& operator=(CommonClueSetBuilder const& other) = delete;
+    CommonClueSetBuilder(CommonClueSetBuilder&& other) noexcept = default;
+    CommonClueSetBuilder& operator=(CommonClueSetBuilder&& other) noexcept = default;
+    CommonClueSetBuilder();
 
-    virtual ~ClueSetBuilder() = default;
-    virtual std::vector<ClueBitset> BuildClueSet() = 0;
+    virtual ~CommonClueSetBuilder() = default;
+    virtual ClueSet BuildClueSet() = 0;
 
     // TODO: I don't understand how it works
     static void ConfigureOnce(PredicateBuilder const& pbuilder) {
@@ -129,6 +131,9 @@ private:
                               size_t& count);
 
 protected:
+    template <typename... Vectors>
+    ClueSet AccumulateClues(Vectors const&... vectors) const;
+
     /** String single-column predicate packs */
     static std::vector<PredicatePack> str_single_packs_;
     /** String cross-column predicate packs */
@@ -140,5 +145,6 @@ protected:
     /** Predicate id -> its correction mask */
     static std::vector<ClueBitset> correction_map_;
 };
+
 
 }  // namespace model
