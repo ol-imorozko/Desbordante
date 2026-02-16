@@ -560,4 +560,49 @@ TEST_F(FastADC, DenialConstraints) {
     }
 }
 
+TEST(FastADCTest, Airport) {
+    CSVParser parser{kAirport};
+    auto table = model::ColumnLayoutTypedRelationData::CreateFrom(parser, true, true);
+    auto col_data = std::move(table->GetColumnData());
+
+    auto pred_index_provider = std::make_shared<PredicateIndexProvider>();
+    PredicateProvider pred_provider;
+    IntIndexProvider int_prov;
+    DoubleIndexProvider double_prov;
+    StringIndexProvider string_prov;
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    PredicateBuilder predicate_builder(&pred_provider, pred_index_provider, true);
+    predicate_builder.BuildPredicateSpace(col_data);
+
+    PliShardBuilder plibuilder(&int_prov, &double_prov, &string_prov);
+    plibuilder.BuildPliShards(col_data);
+
+    EvidenceAuxStructuresBuilder aux_builder(predicate_builder);
+    aux_builder.BuildAll();
+
+    EvidenceSetBuilder evidence_set_builder(plibuilder.pli_shards, aux_builder.GetPredicatePacks());
+    evidence_set_builder.BuildEvidenceSet(aux_builder.GetCorrectionMap(),
+                                          aux_builder.GetCardinalityMask());
+
+    auto evidence_end_time = std::chrono::high_resolution_clock::now();
+    auto evidence_duration =
+            std::chrono::duration_cast<std::chrono::milliseconds>(evidence_end_time - start_time)
+                    .count();
+    std::cout << "[Desbordante] Evidence time: " << evidence_duration << " ms\n";
+    auto aei_start_time = std::chrono::high_resolution_clock::now();
+    ApproxEvidenceInverter dcbuilder(predicate_builder, 0.01,
+                                     std::move(evidence_set_builder.evidence_set),
+                                     table->GetSharedPtrSchema());
+    auto dcs = dcbuilder.BuildDenialConstraints();
+    auto aei_end_time = std::chrono::high_resolution_clock::now();
+    auto aei_duration =
+            std::chrono::duration_cast<std::chrono::milliseconds>(aei_end_time - aei_start_time)
+                    .count();
+    std::cout << "[Desbordante] AEI time: " << aei_duration << " ms\n";
+    auto total_duration = evidence_duration + aei_duration;
+    std::cout << "[Desbordante] Total computing time: " << total_duration << " ms\n";
+    std::cout << "Gathered " << dcs.MinDCSize() << " denial constraints" << std::endl;
+}
+
 }  // namespace tests
