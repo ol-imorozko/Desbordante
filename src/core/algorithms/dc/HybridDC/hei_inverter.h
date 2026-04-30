@@ -14,6 +14,8 @@
 #include <thread>
 #include <vector>
 
+#include <boost/container/small_vector.hpp>
+
 #include "core/algorithms/dc/FastADC/model/denial_constraint.h"
 #include "core/algorithms/dc/FastADC/model/evidence_set.h"
 #include "core/algorithms/dc/FastADC/model/predicate.h"
@@ -79,8 +81,18 @@ static bool BsLessRaw(DBitset const& a, DBitset const& b) noexcept {
 class HEIBitSetTrie {
     static constexpr uint32_t kRoot = 0;
 
+    // Inline storage for the children array. Profiling showed two cache misses
+    // per DoContainsSubset/DoGetAndRemoveSubsets recursion: one on the Node
+    // (~17% of inversion CPU) and a second on the heap-allocated children data
+    // (~16%). Most non-root nodes carry few children, so packing the first
+    // few inline puts the children array on the same cache line as the Node
+    // for the common case and removes that second miss.
+    static constexpr size_t kInlineChildren = 4;
+    using ChildrenT = boost::container::small_vector<std::pair<uint8_t, uint32_t>,
+                                                     kInlineChildren>;
+
     struct Node {
-        std::vector<std::pair<uint8_t, uint32_t>> children;
+        ChildrenT children;
         std::optional<DBitset> stored;
     };
 
