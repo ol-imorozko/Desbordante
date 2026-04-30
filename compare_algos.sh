@@ -2,6 +2,11 @@
 set -euo pipefail
 
 DATASET="${1:-/home/imorozko/maga/fdcd/data/adult_super_trimmed.csv}"
+# Match the HybridDCTest.Adult gtest defaults (20 threads, shard_length 350).
+# Java fdcd's HEI uses parallelStream(), which defaults to ForkJoinPool.commonPool
+# sized to Runtime.availableProcessors() — i.e. all cores already, no flag needed.
+THREADS="${THREADS:-20}"
+SHARD_LENGTH="${SHARD_LENGTH:-350}"
 FDCD_DIR="/home/imorozko/maga/fdcd"
 CPP_BINDINGS="/home/imorozko/maga/Desbordante/build/src/python_bindings"
 OUT="/tmp/dc_compare"
@@ -11,6 +16,7 @@ DATASET="$(realpath "$DATASET")"
 
 echo "Dataset: $DATASET"
 echo "Artifacts in: $OUT"
+echo "C++ threads=$THREADS shard_length=$SHARD_LENGTH (Java auto-parallel via ForkJoinPool)"
 echo ""
 
 # ── C++ HybridDC ──────────────────────────────────────────────────────────────
@@ -24,7 +30,7 @@ import desbordante
 
 t = desbordante.dc.algorithms.HybridDC()
 t.load_data(table=("$DATASET", ",", True))
-t.execute(threads=1, shard_length=0)
+t.execute(threads=$THREADS, shard_length=$SHARD_LENGTH)
 dcs = t.get_dcs()
 with open("$OUT/cpp_dcs.txt", "w") as f:
     for dc in dcs:
