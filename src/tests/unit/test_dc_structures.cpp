@@ -716,7 +716,26 @@ TEST(HybridDCTest, AdultSuperTrimmed) {
     algo.SetOption(kAllowCrossColumns);
     algo.SetOption(kMinimumSharedValue);
     algo.SetOption(kComparableThreshold);
-    algo.SetOption(kThreads, GetThreadsFromEnv(4U));
+    algo.SetOption(kThreads, GetThreadsFromEnv(20U));
+    algo.Execute();
+
+    std::cout << "HybridDC found " << algo.GetDCs().size() << " denial constraints\n";
+}
+
+TEST(HybridDCTest, Adult) {
+    CSVConfig cfg{"/home/imorozko/maga/fdcd/data/adult.csv", ',', true};
+    auto table_stream = std::make_shared<CSVParser>(cfg);
+
+    algos::dc::HybridDC algo;
+    algo.SetOption(config::kTableOpt.GetName(), config::InputTable{table_stream});
+    algo.LoadData();
+
+    using namespace config::names;
+    algo.SetOption(kShardLength, 350U);
+    algo.SetOption(kAllowCrossColumns);
+    algo.SetOption(kMinimumSharedValue);
+    algo.SetOption(kComparableThreshold);
+    algo.SetOption(kThreads, GetThreadsFromEnv(20U));
     algo.Execute();
 
     std::cout << "HybridDC found " << algo.GetDCs().size() << " denial constraints\n";
@@ -736,7 +755,7 @@ TEST(FastADCTest, AdultSuperTrimmedExact) {
     algo.SetOption(kMinimumSharedValue);
     algo.SetOption(kComparableThreshold);
     algo.SetOption(kEvidenceThreshold, 0.0);
-    algo.SetOption(kThreads, GetThreadsFromEnv(4U));
+    algo.SetOption(kThreads, GetThreadsFromEnv(20U));
     algo.Execute();
 
     std::cout << "FastADC(threshold=0) found " << algo.GetDCs().size() << " denial constraints\n";
