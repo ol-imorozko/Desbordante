@@ -293,10 +293,19 @@ public:
             unique_groups.push_back(std::move(grp));
         }
 
+        auto const& pred_objects = pred_index_provider_->GetObjects();
+
         std::vector<size_t> sorted_preds(n_predicates_);
         std::iota(sorted_preds.begin(), sorted_preds.end(), 0);
         std::sort(sorted_preds.begin(), sorted_preds.end(), [&](size_t a, size_t b) {
-            return pred2evi[a].size() < pred2evi[b].size();
+            size_t ea = pred2evi[a].size(), eb = pred2evi[b].size();
+            if (ea != eb) return ea < eb;
+            // Within same evidence count: single-column predicates before cross-column,
+            // matching Java fdcd's natural pid ordering (single-col pids 0..N < cross-col pids).
+            bool ca = pred_objects[a]->IsCrossColumn();
+            bool cb = pred_objects[b]->IsCrossColumn();
+            if (ca != cb) return !ca;
+            return a < b;
         });
 
         if (log) {
@@ -308,8 +317,6 @@ public:
 
         std::vector<DBitset> all_covers_raw;
         std::mutex covers_mutex;
-
-        auto const& pred_objects = pred_index_provider_->GetObjects();
         auto process_one = [&](size_t i) {
             size_t pid = sorted_preds[i];
 
